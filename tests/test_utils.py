@@ -11,6 +11,7 @@ from app.utils import (
 )
 
 
+@pytest.mark.unit
 class TestGenerateRequestId:
     """Tests for request ID generation."""
 
@@ -25,16 +26,16 @@ class TestGenerateRequestId:
         assert id1 != id2
         assert len(id1) == 32  # MD5 hash length
 
-    def test_consistent_for_same_data(self):
-        """Test that same data generates same ID within timeframe."""
+    def test_id_is_string(self):
+        """Test that generated ID is a string."""
         data = {"order_id": "TEST1", "courier_id": 1}
-
-        # Note: Will differ slightly due to timestamp, but format should be same
         id1 = generate_request_id(data)
+
         assert isinstance(id1, str)
         assert len(id1) == 32
 
 
+@pytest.mark.unit
 class TestSerializationFunctions:
     """Tests for data serialization."""
 
@@ -71,6 +72,7 @@ class TestSerializationFunctions:
         assert deserialized == original
 
 
+@pytest.mark.unit
 class TestValidateFeedbackData:
     """Tests for feedback validation."""
 
@@ -138,6 +140,7 @@ class TestValidateFeedbackData:
         assert is_valid is True
 
 
+@pytest.mark.unit
 class TestFormatDatetime:
     """Tests for datetime formatting."""
 
@@ -155,6 +158,7 @@ class TestFormatDatetime:
         assert len(result) == 19  # YYYY-MM-DD HH:MM:SS
 
 
+@pytest.mark.unit
 class TestQueueManager:
     """Tests for queue management."""
 
@@ -224,3 +228,9 @@ class TestQueueManager:
     def test_get_pending_count_empty(self):
         """Test pending count for empty queue."""
         assert QueueManager.get_pending_count([]) == 0
+
+    def test_clear_queue(self):
+        """Test clearing queue."""
+        queue = [{"order_id": f"TEST{i}"} for i in range(5)]
+        result = QueueManager.clear_queue(queue)
+        assert len(result) == 0

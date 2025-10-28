@@ -1,9 +1,10 @@
 """Tests for API endpoints."""
 import pytest
-import json
 from fastapi import status
 
 
+@pytest.mark.api
+@pytest.mark.unit
 class TestFeedbackEndpoints:
     """Tests for feedback API endpoints."""
 
@@ -65,6 +66,8 @@ class TestFeedbackEndpoints:
         assert all(item["courier_id"] == sample_courier.id for item in data)
 
 
+@pytest.mark.api
+@pytest.mark.unit
 class TestCourierEndpoints:
     """Tests for courier API endpoints."""
 

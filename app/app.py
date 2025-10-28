@@ -7,6 +7,7 @@ from app.pages.feedback import feedback_page
 from app.pages.login import login_page
 from app.pages.admin_dashboard import dashboard_page
 from app.api_routes import router
+from app.jazz import jazz_provider
 
 # Setup FastAPI
 api = FastAPI()
@@ -29,7 +30,7 @@ app = rx.App(
         rx.el.link(
             rel="preconnect",
             href="https://fonts.gstatic.com",
-            cross_origin=""
+            crossorigin=""  # FIXED: was cross_origin
         ),
         rx.el.link(
             href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap",
@@ -47,12 +48,37 @@ app = rx.App(
                     opacity: 1;
                 }
             }
+
+            /* Jazz sync indicator animations */
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+            .jazz-syncing {
+                animation: pulse 1.5s ease-in-out infinite;
+            }
         """),
-    ],
+    ]
+    + (
+        [
+            rx.script(src="https://unpkg.com/jazz-tools@latest/dist/index.js"),
+        ]
+        if config.USE_JAZZ_SYNC
+        else []
+    ),
     api_transformer=api,
 )
 
 # Add pages
-app.add_page(feedback_page, route="/", title="Delivery Feedback")
+# FIXED: Don't call feedback_page() when wrapping with provider
+if config.USE_JAZZ_SYNC:
+    app.add_page(
+        lambda: jazz_provider(feedback_page()),  # FIXED: Use lambda wrapper
+        route="/",
+        title="Delivery Feedback"
+    )
+else:
+    app.add_page(feedback_page, route="/", title="Delivery Feedback")
+
 app.add_page(login_page, route="/admin", title="Admin Login")
 app.add_page(dashboard_page, route="/admin/dashboard", title="Admin Dashboard")

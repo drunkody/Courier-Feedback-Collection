@@ -1,8 +1,59 @@
 """User-facing feedback page."""
 import reflex as rx
 from app.states.feedback_state import FeedbackState
+from config import config
 
 REASON_OPTIONS = ["Punctuality", "Politeness", "Item Condition", "Packaging", "Other"]
+
+
+def mode_indicator() -> rx.Component:
+    """Show current app mode."""
+    mode_colors = {
+        "traditional": "bg-gray-100 text-gray-700",
+        "jazz_only": "bg-purple-100 text-purple-700",
+        "hybrid": "bg-blue-100 text-blue-700",
+        "offline_first": "bg-green-100 text-green-700",
+    }
+
+    mode_icons = {
+        "traditional": "database",
+        "jazz_only": "wifi_off",
+        "hybrid": "repeat",
+        "offline_first": "cloud_off",
+    }
+
+    color = mode_colors.get(config.APP_MODE, "bg-gray-100 text-gray-700")
+    icon = mode_icons.get(config.APP_MODE, "info")
+
+    return rx.el.div(
+        rx.icon(icon, class_name="h-3 w-3 mr-1"),
+        rx.el.span(config.APP_MODE.upper(), class_name="text-xs font-bold"),
+        class_name=f"fixed top-2 left-2 {color} px-2 py-1 rounded-full flex items-center shadow-sm opacity-50 hover:opacity-100 transition-opacity",
+    )
+
+
+# Jazz sync indicator
+def jazz_sync_indicator() -> rx.Component:
+    """Show Jazz sync status."""
+    return rx.cond(
+        config.USE_JAZZ_SYNC,
+        rx.el.div(
+            rx.cond(
+                FeedbackState.jazz_initialized,
+                rx.el.div(
+                    rx.icon("cloud", class_name="h-4 w-4 mr-2 text-green-600"),
+                    rx.el.span("Jazz Sync Active", class_name="text-xs font-mono text-green-600"),
+                    class_name="flex items-center",
+                ),
+                rx.el.div(
+                    rx.icon("cloud_off", class_name="h-4 w-4 mr-2 text-gray-400"),
+                    rx.el.span("Initializing...", class_name="text-xs font-mono text-gray-400"),
+                    class_name="flex items-center jazz-syncing",
+                ),
+            ),
+            class_name="fixed bottom-4 right-4 bg-white px-3 py-2 rounded-full shadow-md border border-gray-200",
+        )
+    )
 
 
 def toast_notification() -> rx.Component:
@@ -55,7 +106,11 @@ def online_indicator() -> rx.Component:
         rx.el.div(
             rx.icon("cloud_off", class_name="h-4 w-4 mr-2"),
             rx.el.span(
-                f"{FeedbackState.pending_count} pending sync",
+                rx.cond(
+                    config.USE_JAZZ_SYNC,
+                    f"{FeedbackState.pending_count} queued (Jazz)",
+                    f"{FeedbackState.pending_count} pending sync"
+                ),
                 class_name="text-xs font-mono"
             ),
             class_name="fixed top-4 left-4 bg-yellow-100 text-yellow-800 px-3 py-2 rounded-full shadow-md flex items-center",
@@ -259,18 +314,30 @@ def queued_message() -> rx.Component:
     return rx.el.div(
         rx.icon("clock", class_name="h-12 w-12 text-blue-500 mx-auto mb-4"),
         rx.el.h1("Feedback Saved!", class_name="text-2xl font-bold text-blue-600 mb-2 font-mono text-center"),
-        rx.el.p("Your feedback is saved locally and will sync automatically when you're back online.", class_name="text-gray-600 font-mono text-center mb-4"),
+        rx.el.p(
+            rx.cond(
+                config.USE_JAZZ_SYNC,
+                "Saved with Jazz CRDT sync. Will sync across all your devices automatically!",
+                "Your feedback is saved locally and will sync automatically when you're back online."
+            ),
+            class_name="text-gray-600 font-mono text-center mb-4"
+        ),
         rx.el.p(f"📦 {FeedbackState.pending_count} pending sync", class_name="text-sm text-gray-500 font-mono text-center"),
         class_name="bg-white p-8 rounded-lg shadow-lg w-full max-w-md",
     )
 
 
-@rx.page(route="/", on_load=FeedbackState.on_load)
-def feedback_page() -> rx.Component:
+# FIXED: Removed @rx.page decorator - conflicts with app.add_page()
+def feedback_page_content() -> rx.Component:
     """Main feedback page with state-based rendering."""
-    return rx.el.main(
+    return rx.fragment(
+        # Mode indicator
+        mode_indicator(),
+
         # Toast notifications
         toast_notification(),
+        # Jazz sync indicator
+        jazz_sync_indicator(),
 
         # Online/offline indicator
         online_indicator(),
@@ -296,16 +363,15 @@ def feedback_page() -> rx.Component:
             ),
             class_name="container mx-auto max-w-lg p-6 flex flex-col items-center justify-center min-h-screen",
         ),
+        # Online/offline event listeners - FIXED: Added on_mount to main container
+    )
+
+
+# FIXED: Create wrapper with on_load event
+def feedback_page() -> rx.Component:
+    """Feedback page with event handlers."""
+    return rx.el.main(
+        feedback_page_content(),
         class_name="font-['JetBrains_Mono'] bg-gray-50",
-        # Online/offline event listeners
-        on_mount=rx.call_script("""
-            window.addEventListener('online', () => {
-                console.log('Back online');
-                window.dispatchEvent(new CustomEvent('reflex:update_online_status', {detail: {is_online: true}}));
-            });
-            window.addEventListener('offline', () => {
-                console.log('Gone offline');
-                window.dispatchEvent(new CustomEvent('reflex:update_online_status', {detail: {is_online: false}}));
-            });
-        """),
+        on_mount=FeedbackState.on_load,  # FIXED: Attach on_load here
     )

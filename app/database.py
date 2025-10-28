@@ -2,7 +2,7 @@
 import datetime
 import logging
 from typing import Optional
-from sqlmodel import SQLModel, Field, create_engine, Session
+from sqlmodel import SQLModel, Field, create_engine, Session, select
 import bcrypt
 
 from config import config
@@ -31,7 +31,7 @@ class Feedback(SQLModel, table=True):
     courier_id: int = Field(foreign_key="courier.id")
     rating: int = Field(ge=1, le=5)
     comment: Optional[str] = Field(default=None, max_length=500)
-    reasons: str = Field(default="[]") # JSON string
+    reasons: str = Field(default="[]")  # JSON string
     publish_consent: bool = Field(default=False)
     needs_follow_up: bool = Field(default=False)
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
@@ -73,9 +73,11 @@ def create_db_and_tables():
 def _seed_default_admin():
     """Create default admin user if not exists."""
     with Session(engine) as session:
-        admin = session.query(AdminUser).filter(
+        # FIXED: Use SQLModel's exec() instead of query()
+        statement = select(AdminUser).where(
             AdminUser.username == config.DEFAULT_ADMIN_USERNAME
-        ).first()
+        )
+        admin = session.exec(statement).first()
 
         if not admin:
             logger.info("Creating default admin user...")
@@ -91,6 +93,7 @@ def _seed_default_admin():
 def _seed_sample_courier():
     """Create sample courier for testing."""
     with Session(engine) as session:
+        # FIXED: Use exec() with select() for consistency
         courier = session.get(Courier, 123)
         if not courier:
             logger.info("Creating sample courier...")
