@@ -73,7 +73,7 @@ app = rx.App(
 # FIXED: Don't call feedback_page() when wrapping with provider
 if config.USE_JAZZ_SYNC:
     app.add_page(
-        lambda: jazz_provider(feedback_page()),  # FIXED: Use lambda wrapper
+        lambda: jazz_provider(feedback_page()),
         route="/",
         title="Delivery Feedback"
     )

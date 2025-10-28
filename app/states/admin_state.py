@@ -208,6 +208,6 @@ class AdminState(rx.State):
         # FIXED: Return download with proper encoding
         csv_data = output.getvalue()
         return rx.download(
-            data=csv_data.encode('utf-8'),
+            data=csv_data,
             filename=f"feedback_export_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         )

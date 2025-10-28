@@ -23,7 +23,7 @@ def test_config():
         MAX_QUEUE_SIZE = 10
         SYNC_RETRY_ATTEMPTS = 2
         SYNC_RETRY_DELAY = 1
-        APP_MODE = "hybrid"  # FIXED: Set default test mode
+        APP_MODE = "traditional"
 
     config = TestConfig()
 
