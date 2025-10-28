@@ -16,6 +16,14 @@ class FeedbackService:
     @staticmethod
     def create_feedback(feedback_data: dict) -> Feedback:
         """Create new feedback entry."""
+        # Validate rating
+        rating = feedback_data.get("rating", 0)
+        if not 1 <= rating <= 5:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Rating must be between 1 and 5."
+            )
+
         try:
             with Session(engine) as session:
                 # Check for duplicate
