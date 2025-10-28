@@ -1,0 +1,6 @@
+
+reflex==0.8.17a1
+sqlmodel
+reflex-okta-auth>=0.2.0a0
+fastapi
+bcrypt
