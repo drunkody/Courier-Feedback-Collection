@@ -38,14 +38,26 @@ jobs:
       - name: Run unit tests
         run: |
           pytest tests/ -v -m "unit" --cov=app --cov-report=xml
+        env:
+          APP_ENV: testing
+          APP_MODE: traditional
+          DATABASE_URL: sqlite:///test.db
 
       - name: Run integration tests
         run: |
           pytest tests/ -v -m "integration"
+        env:
+          APP_ENV: testing
+          APP_MODE: traditional
+          DATABASE_URL: sqlite:///test.db
 
       - name: Run offline tests
         run: |
           pytest tests/ -v -m "offline"
+        env:
+          APP_ENV: testing
+          APP_MODE: traditional
+          DATABASE_URL: sqlite:///test.db
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3

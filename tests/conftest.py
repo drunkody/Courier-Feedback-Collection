@@ -6,6 +6,11 @@ from typing import Generator
 from sqlmodel import Session, create_engine, SQLModel
 from fastapi.testclient import TestClient
 
+# Set test environment BEFORE any app imports
+os.environ["APP_ENV"] = "testing"
+os.environ["APP_MODE"] = "traditional"
+os.environ["DATABASE_URL"] = "sqlite:///test.db"
+
 from app.database import Courier, Feedback, AdminUser, hash_password
 from config import Config
 
@@ -109,15 +114,12 @@ def sample_feedback(db_session, sample_courier) -> Feedback:
 @pytest.fixture(scope="function")
 def test_app(db_engine):
     """A test app that uses the test database."""
-    # FIXED: Import here to avoid circular imports
+    # Import the FastAPI app (not the Reflex app)
     from app.app import api
-
-    # FIXED: Patch the engine at module level
-    import app.database
+    
+    # Patch database engine for services
     import app.services
-
-    original_engine = app.database.engine
-    app.database.engine = db_engine
+    original_service_engine = getattr(app.services, 'engine', None)
     app.services.engine = db_engine
 
     # Create tables
@@ -125,9 +127,9 @@ def test_app(db_engine):
 
     yield api
 
-    # Restore original engine
-    app.database.engine = original_engine
-    app.services.engine = original_engine
+    # Restore
+    if original_service_engine:
+        app.services.engine = original_service_engine
 
 
 @pytest.fixture
