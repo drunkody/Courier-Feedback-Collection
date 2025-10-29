@@ -7,6 +7,8 @@ from sqlmodel import Session
 from app.database import Courier, Feedback, AdminUser, hash_password, verify_password
 
 
+@pytest.mark.unit
+@pytest.mark.database
 class TestCourierModel:
     """Tests for Courier model."""
 
@@ -48,6 +50,8 @@ class TestCourierModel:
         assert before <= courier.created_at <= after
 
 
+@pytest.mark.unit
+@pytest.mark.database
 class TestFeedbackModel:
     """Tests for Feedback model."""
 
@@ -120,6 +124,8 @@ class TestFeedbackModel:
         assert feedback.needs_follow_up is False
 
 
+@pytest.mark.unit
+@pytest.mark.database
 class TestAdminUserModel:
     """Tests for AdminUser model."""
 

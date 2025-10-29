@@ -7,6 +7,8 @@ from app.utils import QueueManager, validate_feedback_data
 # Test the underlying logic instead
 
 
+@pytest.mark.unit
+@pytest.mark.state
 class TestFeedbackValidation:
     """Test feedback validation logic used by state."""
 
@@ -38,6 +40,8 @@ class TestFeedbackValidation:
         assert "Rating must be between 1 and 5" in error
 
 
+@pytest.mark.unit
+@pytest.mark.state
 class TestQueueLogic:
     """Test queue logic used by state."""
 
@@ -78,6 +82,8 @@ class TestQueueLogic:
         assert len(queue) == max_size
 
 
+@pytest.mark.unit
+@pytest.mark.state
 class TestAdminStateLogic:
     """Test admin state logic."""
 

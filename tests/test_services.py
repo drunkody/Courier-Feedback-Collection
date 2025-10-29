@@ -8,6 +8,7 @@ from app.services import FeedbackService, CourierService, AuthService
 from app.database import Feedback, Courier, AdminUser, hash_password
 
 
+@pytest.mark.unit
 class TestFeedbackService:
     """Tests for FeedbackService."""
 
@@ -168,6 +169,7 @@ class TestFeedbackService:
             app.services.engine = original_engine
 
 
+@pytest.mark.unit
 class TestCourierService:
     """Tests for CourierService."""
 
@@ -200,6 +202,7 @@ class TestCourierService:
             app.services.engine = original_engine
 
 
+@pytest.mark.unit
 class TestAuthService:
     """Tests for AuthService."""
 
