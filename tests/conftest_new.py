@@ -1,40 +1,41 @@
 """Shared test fixtures and configuration."""
 import pytest
 import os
+import sys
 import tempfile
 from typing import Generator
-from sqlmodel import Session, create_engine, SQLModel
-from fastapi.testclient import TestClient
 
 # Set test environment BEFORE any app imports
 os.environ["APP_ENV"] = "testing"
 os.environ["APP_MODE"] = "traditional"
 os.environ["DATABASE_URL"] = "sqlite:///test.db"
+os.environ["LOG_LEVEL"] = "ERROR"
 
+# Import after environment is set
+from sqlmodel import Session, create_engine, SQLModel
+from fastapi.testclient import TestClient
 from app.database import Courier, Feedback, AdminUser, hash_password
-from config import Config
 
 
-@pytest.fixture(scope="session")
-def test_config():
-    """Test configuration."""
-    # Create temporary test database
+@pytest.fixture(scope="function")
+def db_engine():
+    """Create test database engine."""
+    # Create temporary database file
     db_fd, db_path = tempfile.mkstemp(suffix=".db")
-
-    class TestConfig(Config):
-        DATABASE_URL = f"sqlite:///{db_path}"
-        APP_ENV = "testing"
-        ENABLE_OFFLINE_MODE = True
-        MAX_QUEUE_SIZE = 10
-        SYNC_RETRY_ATTEMPTS = 2
-        SYNC_RETRY_DELAY = 1
-        APP_MODE = "traditional"
-
-    config = TestConfig()
-
-    yield config
-
+    database_url = f"sqlite:///{db_path}"
+    
+    engine = create_engine(
+        database_url,
+        connect_args={"check_same_thread": False},
+        echo=False
+    )
+    SQLModel.metadata.create_all(engine)
+    
+    yield engine
+    
     # Cleanup
+    SQLModel.metadata.drop_all(engine)
+    engine.dispose()
     os.close(db_fd)
     try:
         os.unlink(db_path)
@@ -43,25 +44,11 @@ def test_config():
 
 
 @pytest.fixture(scope="function")
-def db_engine(test_config):
-    """Create test database engine."""
-    engine = create_engine(
-        test_config.DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        echo=False  # FIXED: Disable SQL echo in tests
-    )
-    SQLModel.metadata.create_all(engine)
-    yield engine
-    SQLModel.metadata.drop_all(engine)
-    engine.dispose()
-
-
-@pytest.fixture(scope="function")
 def db_session(db_engine) -> Generator[Session, None, None]:
     """Create a new database session for a test."""
     with Session(db_engine) as session:
         yield session
-        session.rollback()  # FIXED: Rollback after each test
+        session.rollback()
 
 
 @pytest.fixture
@@ -119,8 +106,13 @@ def test_app(db_engine):
     
     # Patch database engine for services
     import app.services
-    original_service_engine = getattr(app.services, 'engine', None)
+    import app.database
+    
+    original_service_engine = app.services.engine
+    original_db_engine = app.database.engine
+    
     app.services.engine = db_engine
+    app.database.engine = db_engine
 
     # Create tables
     SQLModel.metadata.create_all(db_engine)
@@ -128,8 +120,8 @@ def test_app(db_engine):
     yield api
 
     # Restore
-    if original_service_engine:
-        app.services.engine = original_service_engine
+    app.services.engine = original_service_engine
+    app.database.engine = original_db_engine
 
 
 @pytest.fixture
@@ -162,10 +154,3 @@ def mock_invalid_feedback_data():
         "reasons": [],
         "publish_consent": False
     }
-
-
-# FIXED: Remove autouse fixture that was causing issues
-@pytest.fixture
-def isolated_config(monkeypatch, test_config):
-    """Provide isolated config for a test."""
-    return test_config
