@@ -1,6 +1,5 @@
 import reflex as rx
 from ..states.admin_state import AdminState
-import json
 
 
 def header() -> rx.Component:
@@ -32,7 +31,7 @@ def filters() -> rx.Component:
                 rx.el.input(
                     type="date",
                     on_change=AdminState.set_filter_from_date,
-                    default_value=AdminState.filter_from_date,
+                    value=AdminState.filter_from_date,  # FIXED: Use value instead of default_value
                     class_name="w-full p-2 border rounded-md font-mono",
                 ),
                 class_name="flex-1",
@@ -42,7 +41,7 @@ def filters() -> rx.Component:
                 rx.el.input(
                     type="date",
                     on_change=AdminState.set_filter_to_date,
-                    default_value=AdminState.filter_to_date,
+                    value=AdminState.filter_to_date,  # FIXED: Use value
                     class_name="w-full p-2 border rounded-md font-mono",
                 ),
                 class_name="flex-1",
@@ -197,18 +196,28 @@ def feedback_row(feedback: dict) -> rx.Component:
             class_name="p-3 text-center",
         ),
         rx.el.td(
-            str(rx.Var.create(feedback["created_at"])).split(".")[0],
+            # FIXED: Better date formatting
+            rx.cond(
+                feedback["created_at"],
+                feedback["created_at"].to(str).split(".")[0],
+                "N/A"
+            ),
             class_name="p-3 text-sm font-mono text-gray-500 whitespace-nowrap",
         ),
         class_name="hover:bg-gray-50 transition-colors",
     )
 
 
+# FIXED: Wrap in function that adds on_load
 def dashboard_page() -> rx.Component:
+    """Admin dashboard page with authentication check."""
     return rx.el.div(
         header(),
         rx.el.main(
-            filters(), feedback_table(), class_name="container mx-auto p-4 md:p-6"
+            filters(),
+            feedback_table(),
+            class_name="container mx-auto p-4 md:p-6"
         ),
         class_name="bg-gray-50 min-h-screen font-['JetBrains_Mono']",
+        on_mount=AdminState.check_auth_and_load,  # FIXED: Add auth check on mount
     )
