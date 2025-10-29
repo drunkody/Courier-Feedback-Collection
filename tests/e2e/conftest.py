@@ -1,7 +1,7 @@
 """Pytest fixtures for Playwright E2E tests."""
 import pytest
 from playwright.sync_api import sync_playwright, Browser, Page, BrowserContext
-from tests.playwright_config import ReflexTestServer
+from ..playwright_config import ReflexTestServer
 import logging
 
 logging.basicConfig(level=logging.INFO)

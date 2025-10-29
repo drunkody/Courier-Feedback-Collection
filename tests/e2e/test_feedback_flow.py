@@ -1,7 +1,7 @@
 """E2E tests for feedback submission flow."""
 import pytest
 from playwright.sync_api import Page, expect
-from tests.e2e.utils import (
+from .utils import (
     wait_for_reflex_hydration,
     reflex_click,
     reflex_fill,
