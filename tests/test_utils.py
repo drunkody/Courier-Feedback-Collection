@@ -23,16 +23,16 @@ class TestGenerateRequestId:
         id1 = generate_request_id(data1)
         id2 = generate_request_id(data2)
 
-        assert id1 != id2
-        assert len(id1) == 32  # MD5 hash length
+        assert id1 != id2  # nosec B101
+        assert len(id1) == 64  # SHA-256 hash length  # nosec B101
 
     def test_id_is_string(self):
         """Test that generated ID is a string."""
         data = {"order_id": "TEST1", "courier_id": 1}
         id1 = generate_request_id(data)
 
-        assert isinstance(id1, str)
-        assert len(id1) == 32
+        assert isinstance(id1, str)  # nosec B101
+        assert len(id1) == 64  # nosec B101
 
 
 @pytest.mark.unit

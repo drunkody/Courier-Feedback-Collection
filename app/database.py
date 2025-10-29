@@ -72,6 +72,10 @@ def create_db_and_tables():
 
 def _seed_default_admin():
     """Create default admin user if not exists."""
+    if not config.DEFAULT_ADMIN_PASSWORD:
+        logger.warning("Skipping admin seed: Set DEFAULT_ADMIN_PASSWORD env var for security")
+        return
+    
     with Session(engine) as session:
         # FIXED: Use SQLModel's exec() instead of query()
         statement = select(AdminUser).where(

@@ -16,7 +16,7 @@ class Config:
 
     # Admin defaults
     DEFAULT_ADMIN_USERNAME: str = os.getenv("DEFAULT_ADMIN_USERNAME", "admin")
-    DEFAULT_ADMIN_PASSWORD: str = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin")
+    DEFAULT_ADMIN_PASSWORD: str = os.getenv("DEFAULT_ADMIN_PASSWORD")  # No default to avoid hardcoding credentials
 
     # Application
     APP_ENV: Literal["development", "production"] = os.getenv("APP_ENV", "development")

@@ -13,10 +13,10 @@ def generate_request_id(data: Dict[str, Any]) -> str:
         data: Feedback data containing order_id and courier_id
 
     Returns:
-        MD5 hash string
+        SHA-256 hash string
     """
     unique_string = f"{data.get('order_id')}_{data.get('courier_id')}_{datetime.utcnow().isoformat()}"
-    return hashlib.md5(unique_string.encode()).hexdigest()
+    return hashlib.sha256(unique_string.encode()).hexdigest()  # Use SHA-256 for better security
 
 
 def serialize_feedback(data: Dict[str, Any]) -> str:
